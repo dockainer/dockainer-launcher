@@ -6,21 +6,26 @@ import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class DockainerLauncherApp implements QuarkusApplication {
+
+    static Logger LOGGER = LoggerFactory.getLogger(DockainerLauncherApp.class);
 
     Updater updater = new Updater();
 
     void start(@Observes StartupEvent event) {
         if (updater.newVersionAvailable()) {
-            System.out.println("New version of the launcher is available: " + updater.latestVersion());
+            LOGGER.info("New version of the launcher is available: {}", updater.latestVersion());
+
             updater.update();
         }
 
-        System.out.println("You are running the latest version of the launcher.");
+        LOGGER.warn("You are running version {} of the launcher.", updater.currentVersion());
 
-        System.out.println("Dockainer Launcher started.");
+        LOGGER.info("Starting Dockainer Launcher...");
     }
 
 
