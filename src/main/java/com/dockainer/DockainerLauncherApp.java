@@ -14,11 +14,15 @@ public class DockainerLauncherApp implements QuarkusApplication {
 
     void start(@Observes StartupEvent event) {
         if (updater.newVersionAvailable()) {
+            System.out.println("New version of the launcher is available: " + updater.latestVersion());
             updater.update();
         }
 
+        System.out.println("You are running the latest version of the launcher.");
+
         System.out.println("Dockainer Launcher started.");
     }
+
 
     @Override
     public int run(String... args) throws Exception {

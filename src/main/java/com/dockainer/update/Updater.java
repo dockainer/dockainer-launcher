@@ -66,6 +66,7 @@ public class Updater {
     }
 
     public boolean newVersionAvailable() {
-        return !Objects.equals(VERSION, this.latestVersion()) && this.versions.contains(VERSION);
+        String latest = this.latestVersion();
+        return latest != null && !Objects.equals(VERSION, latest);
     }
 }
