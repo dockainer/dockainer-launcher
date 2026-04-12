@@ -3,24 +3,35 @@ package com.dockainer;
 import com.dockainer.update.Updater;
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
-import io.quarkus.runtime.StartupEvent;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ApplicationScoped
 public class DockainerLauncherApp implements QuarkusApplication {
 
-    Updater updater = new Updater();
+    static Logger LOGGER = LoggerFactory.getLogger(DockainerLauncherApp.class);
 
-    void start(@Observes StartupEvent event) {
+    @Inject
+    Updater updater;
+
+    @PostConstruct
+    void load() {
+        updater.tryUpdate();
+
+        if(!updater.isGithubSync()) {
+            LOGGER.warn("No version found on github, you are running the latest version.");
+        }
+
         if (updater.newVersionAvailable()) {
-            System.out.println("New version of the launcher is available: " + updater.latestVersion());
+            LOGGER.info("New version of the launcher is available: {}", updater.latestVersion());
+
             updater.update();
         }
 
-        System.out.println("You are running the latest version of the launcher.");
-
-        System.out.println("Dockainer Launcher started.");
+        LOGGER.info("You are running the latest version of the launcher.");
     }
 
 
