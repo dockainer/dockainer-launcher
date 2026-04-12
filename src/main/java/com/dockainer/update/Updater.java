@@ -2,6 +2,7 @@ package com.dockainer.update;
 
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,19 +20,24 @@ import java.util.Objects;
 @ApplicationScoped
 public class Updater {
 
-
-    @ConfigProperty(name = "quarkus.application.version")
-    String version;
-
     private static final String LAUNCHER = "dockainer-launcher.jar";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(Updater.class);
 
-    List<String> versions = new LinkedList<>();
+    private final List<String> versions = new LinkedList<>();
+    private String version;
 
-    public Updater() {
-        this.tryUpdate();
-        System.out.println(currentVersion());
+    private final String githubUrl;
+    private boolean githubSync = false;
+
+    @Inject
+    GitHubReader reader;
+
+    public Updater(
+            @ConfigProperty(name = "quarkus.application.version") String version,
+            @ConfigProperty(name = "dockainer.github.url") String githubUrl
+    ) {
+        this.version = version;
+        this.githubUrl = githubUrl;
     }
 
     public void update() {
@@ -41,7 +47,7 @@ public class Updater {
 
         File target = new File("../../" + LAUNCHER);
 
-        var url = "https://github.com/dockainer/dockainer-launcher/releases/download/" + latestVersion + "/" + LAUNCHER;
+        var url = this.githubUrl + "/releases/download/" + latestVersion + "/" + LAUNCHER;
 
         if (!this.download(url, target)) {
             LOGGER.error("Update failed");
@@ -71,19 +77,22 @@ public class Updater {
 
     public void tryUpdate() {
         this.versions.clear();
-        this.versions.addAll(GitHubReader.getLatestTags());
+        this.versions.addAll(reader.getLatestTags());
+
+        if (!this.versions.isEmpty()) githubSync = true;
+        else this.versions.add(this.version);
+    }
+
+    public boolean newVersionAvailable() {
+        String latest = this.latestVersion();
+        return latest != null && !Objects.equals(this.version, latest);
     }
 
     public String latestVersion() {
         return versions.getFirst();
     }
 
-    public String currentVersion() {
-        return this.version;
-    }
-
-    public boolean newVersionAvailable() {
-        String latest = this.latestVersion();
-        return latest != null && !Objects.equals(this.version, latest);
+    public boolean isGithubSync() {
+        return githubSync;
     }
 }
